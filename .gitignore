@@ -1,0 +1,4 @@
+dist/
+unibot
+slack_api.token
+*.exe
