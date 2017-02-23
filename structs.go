@@ -27,12 +27,3 @@ type Entities struct {
 	Value string   `json:"Value"`
 	Score *float64 `json:"Score"`
 }
-
-type UnAuthenticatedError struct {
-	Message    string
-	StatusCode int
-}
-
-func (u UnAuthenticatedError) Error() string {
-	return u.Message
-}

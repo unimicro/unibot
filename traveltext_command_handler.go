@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -22,7 +23,10 @@ const (
 	TRAVEL_TEXT_COMMAND_PREFIX = "tt "
 )
 
-var DB *scribble.Driver
+var (
+	DB                 *scribble.Driver
+	errUnAuthenticated = errors.New("User is un-authenticated")
+)
 
 func init() {
 	var err error
@@ -43,7 +47,7 @@ func HandleTravelTextCommand(ev *slack.MessageEvent, rtm *slack.RTM) {
 		cmd := strings.TrimPrefix(strings.ToLower(ev.Text), TRAVEL_TEXT_COMMAND_PREFIX)
 		response, err := runTTCommand(cmd, user)
 		if err != nil {
-			if _, ok := err.(*UnAuthenticatedError); ok {
+			if err == errUnAuthenticated {
 				message = authenticateUser(ev, rtm)
 			} else {
 				message = "Got error when trying to send command to TravelText: " + err.Error()
@@ -109,10 +113,7 @@ func postRequest(url string, payload TTRequestPayload) (TTResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 401 {
-		return ttResponse, &UnAuthenticatedError{
-			Message:    resp.Status,
-			StatusCode: resp.StatusCode,
-		}
+		return ttResponse, errUnAuthenticated
 	}
 
 	body, _ := ioutil.ReadAll(resp.Body)
