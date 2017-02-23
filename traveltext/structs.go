@@ -1,4 +1,4 @@
-package main
+package traveltext
 
 type User struct {
 	ID     string

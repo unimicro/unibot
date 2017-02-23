@@ -1,4 +1,4 @@
-package main
+package traveltext
 
 import (
 	"math/rand"
@@ -14,7 +14,7 @@ const (
 
 var src = rand.NewSource(time.Now().UnixNano())
 
-func RandomString(lenght int) string {
+func randomString(lenght int) string {
 	b := make([]byte, lenght)
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
 	for i, cache, remain := lenght-1, src.Int63(), letterIdxMax; i >= 0; {

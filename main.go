@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,15 +10,15 @@ import (
 )
 
 const (
-	SLACK_TOKEN_FILE_PATH = "./slack_api.token"
+	slackTokenFilePath = "./slack_api.token"
 )
 
 var botID = "N/A"
 
 func main() {
-	slackToken, err := ioutil.ReadFile(SLACK_TOKEN_FILE_PATH)
+	slackToken, err := ioutil.ReadFile(slackTokenFilePath)
 	if err != nil {
-		panic("Couldn't read the slack token file:" + string(SLACK_TOKEN_FILE_PATH))
+		panic("Couldn't read the slack token file:" + string(slackTokenFilePath))
 	}
 
 	api := slack.New(strings.TrimSpace(string(slackToken)))
@@ -37,31 +36,31 @@ func main() {
 
 		case *slack.ConnectedEvent:
 			botID = ev.Info.User.ID
-			//fmt.Println("Infos:", ev.Info)
-			fmt.Println("Connection counter:", ev.ConnectionCount)
+			//logger.Println("Infos:", ev.Info)
+			logger.Println("Connection counter:", ev.ConnectionCount)
 
 		case *slack.MessageEvent:
 			if ev.User != botID {
-				HandleMessage(ev, rtm)
+				handleMessage(ev, rtm)
 			}
 
 		case *slack.PresenceChangeEvent:
-			// fmt.Printf("Presence Change: %v\n", ev)
+			// logger.Printf("Presence Change: %v\n", ev)
 
 		case *slack.LatencyReport:
-			// fmt.Printf("Current latency: %v\n", ev.Value)
+			// logger.Printf("Current latency: %v\n", ev.Value)
 
 		case *slack.RTMError:
-			fmt.Printf("Error: %s\n", ev.Error())
+			logger.Printf("Error: %s\n", ev.Error())
 
 		case *slack.InvalidAuthEvent:
-			fmt.Printf("Invalid credentials")
+			logger.Printf("Invalid credentials")
 			return
 
 		default:
 
 			// Ignore other events..
-			// fmt.Printf("Unexpected: %v\n", msg.Data)
+			// logger.Printf("Unexpected: %v\n", msg.Data)
 		}
 	}
 }
