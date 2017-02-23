@@ -41,6 +41,7 @@ func HandleTravelTextCommand(ev *slack.MessageEvent, rtm *slack.RTM) {
 	var message string
 	getExistingUserError := db.Read(DB_NAME, ev.User, &user)
 
+	rtm.SendMessage(rtm.NewOutgoingMessage("loading traveltext...", ev.Channel))
 	if getExistingUserError != nil {
 		message = authenticateUser(ev, rtm)
 	} else {
