@@ -24,13 +24,13 @@ const (
 )
 
 var (
-	DB                 *scribble.Driver
+	db                 *scribble.Driver
 	errUnAuthenticated = errors.New("User is un-authenticated")
 )
 
 func init() {
 	var err error
-	DB, err = scribble.New(DB_FOLDER, nil)
+	db, err = scribble.New(DB_FOLDER, nil)
 	if err != nil {
 		panic("Couldn't read DB file: " + DB_FOLDER)
 	}
@@ -39,7 +39,7 @@ func init() {
 func HandleTravelTextCommand(ev *slack.MessageEvent, rtm *slack.RTM) {
 	user := User{}
 	var message string
-	getExistingUserError := DB.Read(DB_NAME, ev.User, &user)
+	getExistingUserError := db.Read(DB_NAME, ev.User, &user)
 
 	if getExistingUserError != nil {
 		message = authenticateUser(ev, rtm)
@@ -74,7 +74,7 @@ func addUser(userID string) (User, error) {
 		ID:     userID,
 		Secret: userID + "-" + RandomString(SECRET_RAND_LENGHT),
 	}
-	err := DB.Write(DB_NAME, userID, user)
+	err := db.Write(DB_NAME, userID, user)
 
 	if err != nil {
 		return user, err
