@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/nlopes/slack"
 )
@@ -21,7 +22,7 @@ func main() {
 		panic("Couldn't read the slack token file:" + string(SLACK_TOKEN_FILE_PATH))
 	}
 
-	api := slack.New(string(slackToken))
+	api := slack.New(strings.TrimSpace(string(slackToken)))
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	slack.SetLogger(logger)
 	api.SetDebug(false)
