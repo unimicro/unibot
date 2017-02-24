@@ -100,6 +100,7 @@ func postRequest(url string, payload TTRequestPayload) (ttResponse *TTResponse, 
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -110,6 +111,8 @@ func postRequest(url string, payload TTRequestPayload) (ttResponse *TTResponse, 
 
 	if resp.StatusCode == 401 {
 		return nil, errUnAuthenticated
+	} else if resp.StatusCode < 100 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf(resp.Status)
 	}
 
 	body, _ := ioutil.ReadAll(resp.Body)
