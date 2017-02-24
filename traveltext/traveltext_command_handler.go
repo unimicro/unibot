@@ -39,10 +39,10 @@ func init() {
 func HandleTravelTextCommand(ev *slack.MessageEvent, rtm *slack.RTM) {
 	user := User{}
 	var message string
-	getExistingUserError := db.Read(dbName, ev.User, &user)
+	errGetExistingUser := db.Read(dbName, ev.User, &user)
 
 	rtm.SendMessage(rtm.NewOutgoingMessage("...", ev.Channel))
-	if getExistingUserError != nil {
+	if errGetExistingUser != nil {
 		message = authenticateUser(ev, rtm)
 	} else {
 		cmd := strings.TrimPrefix(strings.ToLower(ev.Text), TravelTextCommandPrefix)
