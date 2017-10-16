@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/nlopes/slack"
+	"github.com/unimicro/unibot/webhooks"
 )
 
 const (
@@ -28,6 +29,8 @@ func main() {
 
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
+
+	go webhooks.StartWebhooksServer(rtm)
 
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
