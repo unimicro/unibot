@@ -54,12 +54,11 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 					}
 					for job, _ := range jobs {
 						if string(job) == obj.Name {
-							message = fmt.Sprintf(
-								"Name: \"%v\", Phase: %v, Status: %v",
-								obj.DisplayName,
-								obj.Build.Phase,
-								obj.Build.Status,
-							)
+
+							message = fmt.Sprintf("[Jenkins] \"%v\" is now %v", obj.DisplayName, obj.Build.Phase)
+							if obj.Build.Status != "" {
+								message = fmt.Sprintf("%s ( Status: %v)", message, obj.Build.Status)
+							}
 							messageBus.SendMessage(messageBus.NewOutgoingMessage(message, string(channelName)))
 							break
 						}
