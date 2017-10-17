@@ -1,13 +1,17 @@
 package webhooks
 
+type Phase string
+type Status string
+
 const (
-	PhaseQueued    = "QUEUED"
-	PhaseStarted   = "STARTED"
-	PhaseCompleted = "COMPLETED"
-	PhaseFinalized = "FINALIZED"
-	StatusFailure  = "FAILURE"
-	StatusSuccess  = "SUCCESS"
-	StatusAborted  = "ABORTED"
+	PhaseQueued    Phase  = "QUEUED"
+	PhaseStarted   Phase  = "STARTED"
+	PhaseCompleted Phase  = "COMPLETED"
+	PhaseFinalized Phase  = "FINALIZED"
+	StatusFailure  Status = "FAILURE"
+	StatusSuccess  Status = "SUCCESS"
+	StatusAborted  Status = "ABORTED"
+	StatusEmpty    Status = ""
 )
 
 type JenkinsNotification struct {
@@ -19,8 +23,8 @@ type JenkinsNotification struct {
 		Number    int    `json:"number"`
 		QueueID   int    `json:"queue_id"`
 		Timestamp int64  `json:"timestamp"`
-		Phase     string `json:"phase"`
-		Status    string `json:"status"`
+		Phase     Phase  `json:"phase"`
+		Status    Status `json:"status"`
 		URL       string `json:"url"`
 		Scm       struct {
 			URL    string `json:"url"`
