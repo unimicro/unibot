@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/unimicro/unibot/storage"
@@ -14,11 +15,16 @@ const (
 	unibotTestChannel = "C47FWA3S4"
 	backendChannel    = "C1BAXE95X"
 	frontendChannel   = "C0FQMKYA1"
+	nightliBuildStart = 0
+	nightliBuildEnd   = 6
 )
 
 func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
+		if isNightlyBuild(time.Now()) {
+			return
+		}
 		var message string
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -73,4 +79,9 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		w.Write([]byte("This endpoint only supports POST"))
 	}
+}
+
+func isNightlyBuild(time time.Time) bool {
+	currentHour := time.Hour()
+	return currentHour > nightliBuildStart && currentHour < nightliBuildEnd
 }
