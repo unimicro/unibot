@@ -9,13 +9,12 @@ import (
 	"net/http"
 	"strings"
 
-	scribble "github.com/nanobox-io/golang-scribble"
+	"github.com/boltdb/bolt"
 	"github.com/nlopes/slack"
+	"github.com/unimicro/unibot/storage"
 )
 
 const (
-	dbFolder                = "./unibot.db"
-	dbName                  = "unibot"
 	secretRandLenght        = 32
 	baseUrl                 = "https://traveltext-jarvis.azurewebsites.net"
 	ttLoginUrl              = baseUrl + "/Signup"
@@ -24,40 +23,48 @@ const (
 )
 
 var (
-	db                 *scribble.Driver
 	errUnAuthenticated = errors.New("User is un-authenticated")
 )
 
-func init() {
-	var err error
-	db, err = scribble.New(dbFolder, nil)
-	if err != nil {
-		panic("Couldn't read the DB folder: " + dbFolder)
-	}
-}
-
 func HandleTravelTextCommand(ev *slack.MessageEvent, rtm *slack.RTM) {
-	user := User{}
 	var message string
-	errGetExistingUser := db.Read(dbName, ev.User, &user)
-
+	var userString []byte
+	err := storage.DB.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte(storage.TraveltextBucket))
+		if err != nil {
+			return err
+		}
+		userString = bucket.Get([]byte(ev.User))
+		return nil
+	})
 	rtm.SendMessage(rtm.NewOutgoingMessage("...", ev.Channel))
-	if errGetExistingUser != nil {
+	if userString == nil {
 		message = authenticateUser(ev, rtm)
 	} else {
-		cmd := strings.TrimPrefix(strings.ToLower(ev.Text), TravelTextCommandPrefix)
-		response, err := runTTCommand(cmd, user)
-		switch {
-		case err == errUnAuthenticated:
-			message = authenticateUser(ev, rtm)
-		case err != nil:
-			message = "Got error when trying to send command to TravelText: " + err.Error()
-		default:
-			message = response.FriendlyResponse
+		var user User
+		err = json.Unmarshal(userString, &user)
+		if err != nil {
+			message = fmt.Sprintf("Could not unmarshal bytestring to user object: %v", userString)
+		} else {
+			cmd := strings.TrimPrefix(strings.ToLower(ev.Text), TravelTextCommandPrefix)
+			response, err := runTTCommand(cmd, user)
+			switch {
+			case err == errUnAuthenticated:
+				message = authenticateUser(ev, rtm)
+			case err != nil:
+				message = "Got error when trying to send command to TravelText: " + err.Error()
+			default:
+				message = response.FriendlyResponse
+			}
 		}
 	}
 
 	rtm.SendMessage(rtm.NewOutgoingMessage(message, ev.Channel))
+
+	if err != nil {
+		rtm.SendMessage(rtm.NewOutgoingMessage(err.Error(), ev.Channel))
+	}
+
 }
 
 func authenticateUser(ev *slack.MessageEvent, rtm *slack.RTM) string {
@@ -74,7 +81,21 @@ func addUser(userID string) (User, error) {
 		ID:     userID,
 		Secret: userID + "-" + randomString(secretRandLenght),
 	}
-	err := db.Write(dbName, userID, user)
+	err := storage.DB.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte(storage.TraveltextBucket))
+		if err != nil {
+			return err
+		}
+		userString, err := json.Marshal(user)
+		if err != nil {
+			return err
+		}
+		err = bucket.Put([]byte(userID), userString)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 
 	if err != nil {
 		return user, err

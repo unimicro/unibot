@@ -22,9 +22,6 @@ const (
 func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		if isNightlyBuild(time.Now()) {
-			return
-		}
 		var message string
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -41,6 +38,9 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 				data,
 			)
 		} else {
+			if isNightlyBuild(time.Now()) || obj.Build.Phase != PhaseFinalized {
+				return
+			}
 			err = storage.DB.View(func(tx *bolt.Tx) error {
 				bucket := tx.Bucket([]byte(storage.JenkinsBucket))
 				if bucket == nil {
@@ -57,7 +57,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 
 							message = fmt.Sprintf("[Jenkins] \"%v\" is now %v", obj.DisplayName, obj.Build.Phase)
 							if obj.Build.Status != StatusEmpty {
-								message = fmt.Sprintf("%s (Status: %v)", message, obj.Build.Status)
+								message = fmt.Sprintf("%s (%v)", message, obj.Build.Status)
 							}
 							messageBus.SendMessage(messageBus.NewOutgoingMessage(message, string(channelName)))
 							break

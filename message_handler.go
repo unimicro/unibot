@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"regexp"
 	"strings"
 
@@ -21,8 +20,6 @@ const (
 var jiraKeyRegex = regexp.MustCompile("^[[:alpha:]]{2,3}-\\d+|\\s[[:alpha:]]{1,3}-\\d+")
 
 func handleMessage(ev *slack.MessageEvent, rtm *slack.RTM) {
-	log.Println(ev.Text)
-	log.Println(jenkins.JenkinsCommandPrefix)
 	switch {
 	case isTravelTextInPublicChannel(ev):
 		rtm.SendMessage(rtm.NewOutgoingMessage(pulicTTCommandWarning, ev.Channel))

@@ -16,8 +16,8 @@ const (
 	jenkinsListCommandPrefix   = JenkinsCommandPrefix + "list"
 	helpMessage                = "Available commands:\n" +
 		"help => this message\n" +
-		"listen => write the jenkins job name after this command to notify this channel when the job builds\n" +
-		"stop => write the jenkins job name after this command to stop notifying this channel about the job \n" +
+		"add => write the jenkins job name after this command to notify this channel when the job builds\n" +
+		"remove => write the jenkins job name after this command to stop notifying this channel about the job\n" +
 		"list => list all jobs that is sendt to this channel"
 )
 
@@ -28,18 +28,18 @@ func HandleJenkinsCommand(ev *slack.MessageEvent, rtm *slack.RTM) {
 		message = helpMessage
 	case strings.HasPrefix(ev.Text, jenkinsAddCommandPrefix):
 		jobName := ev.Text[len(jenkinsAddCommandPrefix):len(ev.Text)]
-		message = addJob(jobName)
+		message = addJob(ev, jobName)
 	case strings.HasPrefix(ev.Text, jenkinsListCommandPrefix):
-		message = listJobs()
+		message = listJobs(ev)
 	case strings.HasPrefix(ev.Text, jenkinsRemoveCommandPrefix):
 		jobName := ev.Text[len(jenkinsRemoveCommandPrefix):len(ev.Text)]
 
-		message = removeJob(jobName)
+		message = removeJob(ev, jobName)
 	}
 	rtm.SendMessage(rtm.NewOutgoingMessage(message, ev.Channel))
 }
 
-func addJob(jobName string) (message string) {
+func addJob(ev *slack.MessageEvent, jobName string) (message string) {
 	err := storage.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(storage.JenkinsBucket))
 		if err != nil {
@@ -72,9 +72,10 @@ func addJob(jobName string) (message string) {
 	if err != nil {
 		message = err.Error()
 	}
+	return
 }
 
-func listJobs() (message string) {
+func listJobs(ev *slack.MessageEvent) (message string) {
 	err := storage.DB.View(func(tx *bolt.Tx) error {
 		var jobs map[string]bool
 		bucket := tx.Bucket([]byte(storage.JenkinsBucket))
@@ -102,9 +103,10 @@ func listJobs() (message string) {
 	if err != nil {
 		message = "ERROR: " + err.Error()
 	}
+	return
 }
 
-func removeJob(jobName string) (message string) {
+func removeJob(ev *slack.MessageEvent, jobName string) (message string) {
 	err := storage.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(storage.JenkinsBucket))
 		if err != nil {
@@ -137,4 +139,5 @@ func removeJob(jobName string) (message string) {
 	if err != nil {
 		message = err.Error()
 	}
+	return
 }

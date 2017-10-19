@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	dbLocation    = "/tmp/bolt.db"
-	JenkinsBucket = "jenkinsJobs"
+	dbLocation       = "./bolt.db"
+	JenkinsBucket    = "jenkinsJobs"
+	TraveltextBucket = "TraveltextUsers"
 )
 
 var (

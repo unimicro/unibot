@@ -1,12 +1,6 @@
 [submodule "vendor/github.com/nlopes/slack"]
 	path = vendor/github.com/nlopes/slack
 	url = https://github.com/nlopes/slack
-[submodule "vendor/github.com/nanobox-io/golang-scribble"]
-	path = vendor/github.com/nanobox-io/golang-scribble
-	url = https://github.com/nanobox-io/golang-scribble
-[submodule "vendor/github.com/jcelliott/lumber"]
-	path = vendor/github.com/jcelliott/lumber
-	url = https://github.com/jcelliott/lumber
 [submodule "vendor/golang.org/x/crypto"]
 	path = vendor/golang.org/x/crypto
 	url = https://github.com/golang/crypto
