@@ -8,13 +8,11 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/unimicro/unibot/constants"
 	"github.com/unimicro/unibot/storage"
 )
 
 const (
-	unibotTestChannel = "C47FWA3S4"
-	backendChannel    = "C1BAXE95X"
-	frontendChannel   = "C0FQMKYA1"
 	nightliBuildStart = 0
 	nightliBuildEnd   = 6
 )
@@ -69,7 +67,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 			})
 
 			if err != nil {
-				messageBus.SendMessage(messageBus.NewOutgoingMessage(err.Error(), unibotTestChannel))
+				messageBus.SendMessage(messageBus.NewOutgoingMessage(err.Error(), constants.UnibotLogChannelID))
 			}
 
 		}

@@ -9,4 +9,4 @@ mkdir dist/
 
 env GOOS=linux go build -o dist/unibot.new
 
-cp -r slack_api.token unibot.service dist/
+cp -r tokens.json unibot.service dist/

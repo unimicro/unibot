@@ -1,4 +1,5 @@
 dist/
 unibot
-slack_api.token
 *.exe
+tokens.json
+

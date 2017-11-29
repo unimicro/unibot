@@ -36,13 +36,13 @@ func StartWebhooksServer(rtm *slack.RTM) {
 		},
 	}
 	if os.Getenv("DEVELOP") != "" {
-		log.Print("Starting webhooks listener on port 8080")
+		log.Println("Listening for webhooks on port 8080...")
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			log.Fatal(err)
 			os.Exit(3)
 		}
 	} else {
-		log.Print("Starting webhooks listener on port ", port)
+		log.Printf("Listening for webhooks on port %s...\n", port)
 		if err := server.ListenAndServeTLS("", ""); err != nil {
 			log.Fatal(err)
 			os.Exit(3)
