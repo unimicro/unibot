@@ -15,31 +15,32 @@ import (
 )
 
 const (
-	economyGitterRoomID  = "5a1d5911d73408ce4f80a64d"
-	economyGitterRoomUrl = "https://gitter.im/unimicro/Economy"
-	unibotGitterRoomID   = "5a1d8778d73408ce4f80af80"
-	gitterEconomyRoomUrl = "https://stream.gitter.im/v1/rooms/" + economyGitterRoomID + "/chatMessages"
-	gitterUnibotRoomUrl  = "https://stream.gitter.im/v1/rooms/" + unibotGitterRoomID + "/chatMessages"
-	gitterHeartbeat      = " \n"
-	quietPeriod          = time.Duration(time.Minute * 10)
+	economyRoomID   = "5a1d5911d73408ce4f80a64d"
+	economyRoomName = "Economy"
+	unibotRoomID    = "5a1d8778d73408ce4f80af80"
+	unibotRoomName  = "unibot-test-room"
+	roomUrl         = "https://gitter.im/unimicro/%s"
+	roomApiUrl      = "https://stream.gitter.im/v1/rooms/%s/chatMessages"
+	heartbeat       = " \n"
+	quietPeriod     = time.Duration(time.Minute * 10)
 )
 
 func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 	client := &http.Client{}
 	var (
-		request *http.Request
-		err     error
-		roomUrl string
-		roomID  string
+		request             *http.Request
+		err                 error
+		roomName            string
+		slackReceiverRoomID string
 	)
-	if os.Getenv("DEVELOP") != "" {
-		request, err = http.NewRequest("GET", gitterUnibotRoomUrl, nil)
-		roomID = constants.UnibotLogChannelID
-		roomUrl = gitterUnibotRoomUrl
+	if isDevelopEnvironment() {
+		request, err = http.NewRequest("GET", fmt.Sprintf(roomApiUrl, unibotRoomID), nil)
+		slackReceiverRoomID = constants.UnibotLogChannelID
+		roomName = unibotRoomName
 	} else {
-		request, err = http.NewRequest("GET", gitterEconomyRoomUrl, nil)
-		roomID = constants.DevelopersChannelID
-		roomUrl = economyGitterRoomUrl
+		request, err = http.NewRequest("GET", fmt.Sprintf(roomApiUrl, economyRoomID), nil)
+		slackReceiverRoomID = constants.DevelopersChannelID
+		roomName = economyRoomName
 	}
 	if err != nil {
 		panic("ERROR starting initial gitter request: " + err.Error())
@@ -77,7 +78,7 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 				)
 				break
 			}
-			if string(line) == gitterHeartbeat {
+			if string(line) == heartbeat {
 				// Dropping heartbeat
 				continue
 			}
@@ -98,14 +99,19 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 
 			lastMessageWasSent = time.Now()
 			messageToSlack := fmt.Sprintf(
-				"%s on gitter: %s?at=%s",
-				messageFromGitter.FromUser.DisplayName,
-				roomUrl,
+				"%s: %s?at=%s\n%s",
+				messageFromGitter.FromUser.Username,
+				fmt.Sprintf(roomUrl, roomName),
 				messageFromGitter.ID,
+				messageFromGitter.Text,
 			)
-			rtm.SendMessage(rtm.NewOutgoingMessage(messageToSlack, roomID))
+			rtm.SendMessage(rtm.NewOutgoingMessage(messageToSlack, slackReceiverRoomID))
 		}
 	}
+}
+
+func isDevelopEnvironment() bool {
+	return os.Getenv("DEVELOP") != ""
 }
 
 func logToSlackTestChannel(rtm *slack.RTM, message string) {
