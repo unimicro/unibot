@@ -28,27 +28,27 @@ const (
 func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 	client := &http.Client{}
 	var (
-		request             *http.Request
-		err                 error
+		gitterUrl           string
 		roomName            string
 		slackReceiverRoomID string
 	)
 	if isDevelopEnvironment() {
-		request, err = http.NewRequest("GET", fmt.Sprintf(roomApiUrl, unibotRoomID), nil)
+		gitterUrl = fmt.Sprintf(roomApiUrl, unibotRoomID)
 		slackReceiverRoomID = constants.UnibotLogChannelID
 		roomName = unibotRoomName
 	} else {
-		request, err = http.NewRequest("GET", fmt.Sprintf(roomApiUrl, economyRoomID), nil)
+		gitterUrl = fmt.Sprintf(roomApiUrl, economyRoomID)
 		slackReceiverRoomID = constants.DevelopersChannelID
 		roomName = economyRoomName
 	}
+	request, err := http.NewRequest("GET", gitterUrl, nil)
 	if err != nil {
 		panic("ERROR starting initial gitter request: " + err.Error())
 	}
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", gitterToken))
 	var (
 		lastMessageWasSent time.Time
-		waitMultiplier     = 16
+		waitMultiplier     = 1
 	)
 	for {
 		response, err := client.Do(request)
