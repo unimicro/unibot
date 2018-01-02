@@ -1,0 +1,32 @@
+{
+  "id": "5a4b37e2edd2230811014dee",
+  "text": "sdaf",
+  "html": "sdaf",
+  "sent": "2018-01-02T07:42:26.626Z",
+  "fromUser": {
+    "id": "55947b4015522ed4b3e333d8",
+    "username": "karl-gustav",
+    "displayName": "Karl Gustav",
+    "url": "\/karl-gustav",
+    "avatarUrl": "https:\/\/avatars-04.gitter.im\/gh\/uv\/4\/karl-gustav",
+    "avatarUrlSmall": "https:\/\/avatars1.githubusercontent.com\/u\/1589440?v=4&s=60",
+    "avatarUrlMedium": "https:\/\/avatars1.githubusercontent.com\/u\/1589440?v=4&s=128",
+    "v": 2,
+    "gv": "4"
+  },
+  "unread": true,
+  "readBy": 0,
+  "urls": [
+
+  ],
+  "mentions": [
+
+  ],
+  "issues": [
+
+  ],
+  "meta": [
+
+  ],
+  "v": 1
+}
