@@ -98,14 +98,25 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 			}
 
 			lastMessageWasSent = time.Now()
-			messageToSlack := fmt.Sprintf(
-				"%s: %s?at=%s\n%s",
-				messageFromGitter.FromUser.Username,
+
+			heading := fmt.Sprintf(
+				"<%s?at=%s|open in gitter>:",
 				fmt.Sprintf(roomUrl, roomName),
 				messageFromGitter.ID,
-				messageFromGitter.Text,
 			)
-			rtm.SendMessage(rtm.NewOutgoingMessage(messageToSlack, slackReceiverRoomID))
+			params := slack.PostMessageParameters{
+				IconURL:  messageFromGitter.FromUser.AvatarURLSmall,
+				Username: messageFromGitter.FromUser.DisplayName + " (gitter)",
+				Attachments: []slack.Attachment{
+					{
+						Pretext:    heading,
+						Text:       messageFromGitter.Text,
+						MarkdownIn: []string{"pretext"},
+					},
+				},
+			}
+
+			rtm.Client.PostMessage(slackReceiverRoomID, "", params)
 		}
 	}
 }
