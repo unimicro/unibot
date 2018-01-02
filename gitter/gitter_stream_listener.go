@@ -22,7 +22,7 @@ const (
 	roomUrl         = "https://gitter.im/unimicro/%s"
 	roomApiUrl      = "https://stream.gitter.im/v1/rooms/%s/chatMessages"
 	heartbeat       = " \n"
-	quietPeriod     = time.Duration(time.Minute * 10)
+	quietPeriod     = time.Duration(time.Hour * 1)
 )
 
 func Listen(rtm *slack.RTM, gitterToken auth.Token) {
