@@ -47,8 +47,9 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 	}
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", gitterToken))
 	var (
-		lastMessageWasSent time.Time
-		waitMultiplier     = 1
+		lastFullMessageWasSent time.Time
+		lastFullMessageID      string
+		waitMultiplier         = 1
 	)
 	for {
 		response, err := client.Do(request)
@@ -70,6 +71,7 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 
 		reader := bufio.NewReader(response.Body)
 		for {
+			isInQuietPeriod := time.Now().Before(lastFullMessageWasSent.Add(quietPeriod))
 			line, err := reader.ReadBytes('\n')
 			if err != nil {
 				logToSlackTestChannel(
@@ -82,10 +84,6 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 				// Dropping heartbeat
 				continue
 			}
-			if time.Now().Before(lastMessageWasSent.Add(quietPeriod)) {
-				// Dropping because still inside quited period
-				continue
-			}
 
 			var messageFromGitter GitterMessage
 			err = json.Unmarshal(line, &messageFromGitter)
@@ -96,8 +94,6 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 				)
 				continue
 			}
-
-			lastMessageWasSent = time.Now()
 
 			heading := fmt.Sprintf(
 				"<%s?at=%s|open in gitter>:",
@@ -116,7 +112,21 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 				},
 			}
 
-			rtm.Client.PostMessage(slackReceiverRoomID, "", params)
+			// Send messages as replies to last "full" message if in quiet period
+			if isInQuietPeriod {
+				params.ThreadTimestamp = lastFullMessageID
+			}
+
+			_, postedMessageID, err := rtm.Client.PostMessage(slackReceiverRoomID, "", params)
+			if err != nil {
+				logToSlackTestChannel(rtm, "Got an error back when posting a message to slack: "+err.Error())
+				continue
+			}
+
+			if !isInQuietPeriod {
+				lastFullMessageID = postedMessageID
+				lastFullMessageWasSent = time.Now()
+			}
 		}
 	}
 }
