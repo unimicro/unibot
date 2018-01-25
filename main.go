@@ -7,31 +7,29 @@ import (
 	"github.com/nlopes/slack"
 	"github.com/unimicro/unibot/auth"
 	"github.com/unimicro/unibot/gitter"
+	"github.com/unimicro/unibot/logger"
 	"github.com/unimicro/unibot/webhooks"
-)
-
-const (
-	tokenFileLocation = "./tokens.json"
 )
 
 var botID = "N/A"
 
 func main() {
-	authTokens := auth.ReadTokenFile(tokenFileLocation)
-	slackToken := authTokens.Slack
-	gitterToken := authTokens.Gitter
+	tokens := auth.GetTokens()
 
-	api := slack.New(string(slackToken))
-	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
-	slack.SetLogger(logger)
+	api := slack.New(tokens.Slack.AsString())
+	slackLogger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
+	slack.SetLogger(slackLogger)
 	api.SetDebug(false)
 
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
 
 	go webhooks.StartWebhooksServer(rtm)
-	go gitter.Listen(rtm, gitterToken)
-	readRtmStream(rtm, logger)
+	go gitter.Listen(rtm, tokens.Gitter)
+
+	logger.SetRTM(rtm)
+
+	readRtmStream(rtm, slackLogger)
 }
 
 func readRtmStream(rtm *slack.RTM, logger *log.Logger) {

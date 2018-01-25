@@ -1,11 +1,11 @@
 package main
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/nlopes/slack"
 	"github.com/unimicro/unibot/jenkins"
+	"github.com/unimicro/unibot/jira"
 	"github.com/unimicro/unibot/traveltext"
 )
 
@@ -17,8 +17,6 @@ const (
 		", please talk to me privately for that: https://unimicro.slack.com/messages/@unibot"
 )
 
-var jiraKeyRegex = regexp.MustCompile("^[[:alpha:]]{2,3}-\\d+|\\s[[:alpha:]]{1,3}-\\d+")
-
 func handleMessage(ev *slack.MessageEvent, rtm *slack.RTM) {
 	switch {
 	case isTravelTextInPublicChannel(ev):
@@ -28,7 +26,7 @@ func handleMessage(ev *slack.MessageEvent, rtm *slack.RTM) {
 	case strings.HasPrefix(strings.ToLower(ev.Text), jenkins.JenkinsCommandPrefix):
 		jenkins.HandleJenkinsCommand(ev, rtm)
 	case strings.HasPrefix(ev.Channel, publicChannelPrefix):
-		handleJiraKeyInMessage(ev, rtm)
+		jira.HandleJiraKeyInMessage(ev, rtm)
 	}
 }
 
@@ -40,14 +38,4 @@ func isDMTravelTextCommand(ev *slack.MessageEvent) bool {
 func isTravelTextInPublicChannel(ev *slack.MessageEvent) bool {
 	return strings.HasPrefix(ev.Text, uniBotUserId+" tt ") &&
 		strings.HasPrefix(ev.Channel, publicChannelPrefix)
-}
-
-func handleJiraKeyInMessage(ev *slack.MessageEvent, rtm *slack.RTM) {
-	matches := jiraKeyRegex.FindAllString(ev.Text, -1)
-	for _, m := range matches {
-		rtm.SendMessage(rtm.NewOutgoingMessage(
-			"https://unimicro.atlassian.net/browse/"+strings.ToUpper(strings.TrimSpace(m)),
-			ev.Channel,
-		))
-	}
 }
