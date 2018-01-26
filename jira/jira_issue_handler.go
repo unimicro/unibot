@@ -32,11 +32,19 @@ func HandleJiraKeyInMessage(ev *slack.MessageEvent, rtm *slack.RTM) {
 			Attachments: []slack.Attachment{
 				{
 					Pretext:    heading,
-					Text:       jiraIssue.Fields.Description,
 					MarkdownIn: []string{"pretext"},
 				},
 			},
 		}
+
+		var footerInfo []string
+		if jiraIssue.Fields.Assignee.DisplayName != "" {
+			footerInfo = append(footerInfo, "Assignee: "+jiraIssue.Fields.Assignee.DisplayName)
+			params.Attachments[0].FooterIcon = jiraIssue.Fields.Assignee.AvatarUrls.One6X16
+		}
+		footerInfo = append(footerInfo, "Status: "+jiraIssue.Fields.Status.Name)
+		params.Attachments[0].Footer = strings.Join(footerInfo, ", ")
+
 		_, _, err := rtm.Client.PostMessage(ev.Channel, "", params)
 		if err != nil {
 			logger.Log("[JIRA] Error when posting message", err.Error())
