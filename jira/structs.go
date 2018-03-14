@@ -7,9 +7,14 @@ type JiraIssue struct {
 	Key    string `json:"key"`
 	Fields struct {
 		FixVersions []interface{} `json:"fixVersions"`
-		Resolution  interface{}   `json:"resolution"`
-		LastViewed  string        `json:"lastViewed"`
-		Priority    struct {
+		Resolution  struct {
+			Self        string `json:"self"`
+			ID          string `json:"id"`
+			Description string `json:"description"`
+			Name        string `json:"name"`
+		} `json:"resolution"`
+		LastViewed string `json:"lastViewed"`
+		Priority   struct {
 			Self    string `json:"self"`
 			IconURL string `json:"iconUrl"`
 			Name    string `json:"name"`

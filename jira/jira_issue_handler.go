@@ -43,6 +43,11 @@ func HandleJiraKeyInMessage(ev *slack.MessageEvent, rtm *slack.RTM) {
 			params.Attachments[0].FooterIcon = jiraIssue.Fields.Assignee.AvatarUrls.One6X16
 		}
 		footerInfo = append(footerInfo, "Status: "+jiraIssue.Fields.Status.Name)
+		if jiraIssue.Fields.Resolution.Name != "" {
+			footerInfo = append(footerInfo, "Resolution: "+jiraIssue.Fields.Resolution.Name)
+			params.Attachments[0].Footer = strings.Join(footerInfo, ", ")
+		}
+
 		params.Attachments[0].Footer = strings.Join(footerInfo, ", ")
 
 		_, _, err := rtm.Client.PostMessage(ev.Channel, "", params)
