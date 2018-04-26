@@ -30,11 +30,12 @@ func StartWebhooksServer(rtm *slack.RTM) {
 	http.HandleFunc("/webhooks/jenkins", jenkinsHandler)
 
 	server := &http.Server{
-		Addr: ":" + port,
+		Addr: ":https",
 		TLSConfig: &tls.Config{
 			GetCertificate: certManager.GetCertificate,
 		},
 	}
+
 	if os.Getenv("DEVELOP") != "" {
 		log.Println("Listening for webhooks on port 8080...")
 		if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -42,7 +43,9 @@ func StartWebhooksServer(rtm *slack.RTM) {
 			os.Exit(3)
 		}
 	} else {
-		log.Printf("Listening for webhooks on port %s...\n", port)
+		log.Println("Listening for webhooks on port 443 and 80...\n")
+
+		go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
 		if err := server.ListenAndServeTLS("", ""); err != nil {
 			log.Fatal(err)
 			os.Exit(3)
