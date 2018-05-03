@@ -64,7 +64,9 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 			)
 			time.Sleep(time.Second * time.Duration(waitMultiplier))
 			waitMultiplier *= 2
+			continue
 		}
+		waitMultiplier *= 1
 		defer response.Body.Close()
 
 		log.Println("Listening for gitter messages...")
