@@ -10,3 +10,6 @@
 [submodule "vendor/github.com/boltdb/bolt"]
 	path = vendor/github.com/boltdb/bolt
 	url = git@github.com:boltdb/bolt.git
+[submodule "vendor/github.com/gorilla/websocket"]
+	path = vendor/github.com/gorilla/websocket
+	url = git@github.com:gorilla/websocket.git

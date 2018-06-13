@@ -53,6 +53,19 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 	)
 	for {
 		response, err := client.Do(request)
+		if response.StatusCode < 200 || response.StatusCode > 300 {
+			logToSlackTestChannel(
+				rtm,
+				fmt.Sprintf(
+					"ERROR %d statuscode returned from gitter (retrying in %d seconds)\n",
+					response.StatusCode,
+					waitMultiplier,
+				),
+			)
+			time.Sleep(time.Second * time.Duration(waitMultiplier))
+			waitMultiplier *= 2
+			continue
+		}
 		if err != nil {
 			logToSlackTestChannel(
 				rtm,
@@ -66,7 +79,6 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 			waitMultiplier *= 2
 			continue
 		}
-		waitMultiplier *= 1
 		defer response.Body.Close()
 
 		log.Println("Listening for gitter messages...")
@@ -78,8 +90,13 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 			if err != nil {
 				logToSlackTestChannel(
 					rtm,
-					"ERROR reading message from gitter: '"+err.Error()+"'",
+					fmt.Sprintf("ERROR reading message from gitter (retrying in %d seconds): '%s'",
+						waitMultiplier,
+						err,
+					),
 				)
+				time.Sleep(time.Second * time.Duration(waitMultiplier))
+				waitMultiplier *= 2
 				break
 			}
 			if string(line) == heartbeat {
@@ -129,6 +146,7 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 				lastFullMessageID = postedMessageID
 				lastFullMessageWasSent = time.Now()
 			}
+			waitMultiplier = 1
 		}
 	}
 }
