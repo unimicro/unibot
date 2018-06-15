@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"time"
@@ -25,14 +26,18 @@ const (
 	quietPeriod     = time.Duration(time.Hour * 1)
 )
 
+var (
+	client               = &http.Client{}
+	isDevelopEnvironment = os.Getenv("DEVELOP") != ""
+)
+
 func Listen(rtm *slack.RTM, gitterToken auth.Token) {
-	client := &http.Client{}
 	var (
 		gitterUrl           string
 		roomName            string
 		slackReceiverRoomID string
 	)
-	if isDevelopEnvironment() {
+	if isDevelopEnvironment {
 		gitterUrl = fmt.Sprintf(roomApiUrl, unibotRoomID)
 		slackReceiverRoomID = constants.UnibotLogChannelID
 		roomName = unibotRoomName
@@ -41,42 +46,24 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 		slackReceiverRoomID = constants.DevelopersChannelID
 		roomName = economyRoomName
 	}
-	request, err := http.NewRequest("GET", gitterUrl, nil)
-	if err != nil {
-		panic("ERROR starting initial gitter request: " + err.Error())
-	}
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", gitterToken))
 	var (
 		lastFullMessageWasSent time.Time
 		lastFullMessageID      string
-		waitMultiplier         = 1
+		retries                = 0
 	)
 	for {
-		response, err := client.Do(request)
-		if response.StatusCode < 200 || response.StatusCode > 300 {
-			logToSlackTestChannel(
-				rtm,
-				fmt.Sprintf(
-					"ERROR %d statuscode returned from gitter (retrying in %d seconds)\n",
-					response.StatusCode,
-					waitMultiplier,
-				),
-			)
-			time.Sleep(time.Second * time.Duration(waitMultiplier))
-			waitMultiplier *= 2
-			continue
-		}
+		time.Sleep(time.Second * time.Duration(pow(2, retries)))
+		response, err := makeHttpRequest(gitterUrl, gitterToken)
 		if err != nil {
 			logToSlackTestChannel(
 				rtm,
 				fmt.Sprintf(
 					"ERROR making http request to gitter (retrying in %d seconds): %s\n",
-					waitMultiplier,
-					err.Error(),
+					pow(2, retries),
+					err,
 				),
 			)
-			time.Sleep(time.Second * time.Duration(waitMultiplier))
-			waitMultiplier *= 2
+			retries++
 			continue
 		}
 		defer response.Body.Close()
@@ -90,15 +77,16 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 			if err != nil {
 				logToSlackTestChannel(
 					rtm,
-					fmt.Sprintf("ERROR reading message from gitter (retrying in %d seconds): '%s'",
-						waitMultiplier,
+					fmt.Sprintf(
+						"ERROR reading message from gitter (retrying in %d seconds): '%s'",
+						pow(2, retries),
 						err,
 					),
 				)
-				time.Sleep(time.Second * time.Duration(waitMultiplier))
-				waitMultiplier *= 2
+				retries++
 				break
 			}
+			retries = 0
 			if string(line) == heartbeat {
 				// Dropping heartbeat
 				continue
@@ -109,7 +97,7 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 			if err != nil {
 				logToSlackTestChannel(
 					rtm,
-					fmt.Sprintf("ERROR parsing JSON message from gitter: %s\nThe JSON:\n%s", err.Error(), line),
+					fmt.Sprintf("ERROR parsing JSON message from gitter: %s\nThe JSON:\n%s", err, line),
 				)
 				continue
 			}
@@ -146,13 +134,8 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 				lastFullMessageID = postedMessageID
 				lastFullMessageWasSent = time.Now()
 			}
-			waitMultiplier = 1
 		}
 	}
-}
-
-func isDevelopEnvironment() bool {
-	return os.Getenv("DEVELOP") != ""
 }
 
 func logToSlackTestChannel(rtm *slack.RTM, message string) {
@@ -161,4 +144,21 @@ func logToSlackTestChannel(rtm *slack.RTM, message string) {
 		message,
 		constants.UnibotLogChannelID,
 	))
+}
+
+func makeHttpRequest(url string, bearerToken auth.Token) (*http.Response, error) {
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Couldn't start initial gitter request: %s", err)
+	}
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
+	response, err := client.Do(request)
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		return nil, fmt.Errorf("%d statuscode returned from gitter\n", response.StatusCode)
+	}
+	return response, nil
+}
+
+func pow(x, y int) int {
+	return int(math.Pow(float64(x), float64(y)))
 }

@@ -6,9 +6,7 @@ Type=simple
 WorkingDirectory=/srv/unibot
 ExecStart=/srv/unibot/unibot
 Restart=always
-RestartSec=90
-StartLimitInterval=400
-StartLimitBurst=3
+RestartSec=5
 
 [Unit]
 After=default.target
