@@ -1,29 +1,10 @@
-# Requirements to run locally:
+Setup ssh autologin with the name "unibot" in ~/.ssh/config
 
-Start by creating a file name "slack_api.token" and put the slack api token into it,
-it's already in .gitignore so you don't have to worry about it being committed.
+Run "./setup.sh"
 
-# Installation on server:
+Run "./build.sh && ./deploy.sh"
 
-Create the target folders(server):
+If you have another name for the server in ssh/config you can put that after the deploy and setup scripts,
+i.e. `./build.sh && ./deploy.sh <my server name>`
 
-    mkdir /tmp/unibot-tmp/
-    sudo mkdir /srv/unibot/
-    sudo chmod 755 /srv/unibot/
-
-Run the build and deploy scripts (locally):
-
-    ./build.sh && ./deploy.sh
-
-Start by installing it as a service in a system that has systemd
-installed(server):
-
-    sudo systemctl enable /srv/unibot/unibot.service
-
-And start the service(server):
-
-    sudo systemctl start unibot.service
-
-And check the logs that everything went ok(server):
-
-    journalctl -u unibot.service # add -f to continuously print new entries
+PS: This project uses git submodules for it's go dependencies.

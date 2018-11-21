@@ -1,5 +1,6 @@
 dist/
 unibot
 *.exe
+*.new
 tokens.json
 
