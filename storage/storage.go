@@ -1,25 +1,24 @@
 package storage
 
 import (
-	"log"
+    "log"
 
-	"github.com/boltdb/bolt"
+    "github.com/boltdb/bolt"
 )
 
 const (
-	dbLocation       = "./bolt.db"
-	JenkinsBucket    = "jenkinsJobs"
-	TraveltextBucket = "TraveltextUsers"
+    dbLocation       = "./bolt.db"
+    TraveltextBucket = "TraveltextUsers"
 )
 
 var (
-	DB *bolt.DB
+    DB *bolt.DB
 )
 
 func init() {
-	var err error
-	DB, err = bolt.Open(dbLocation, 0644, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+    var err error
+    DB, err = bolt.Open(dbLocation, 0644, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
 }

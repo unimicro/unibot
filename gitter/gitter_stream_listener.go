@@ -58,7 +58,7 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 			logToSlackTestChannel(
 				rtm,
 				fmt.Sprintf(
-					"ERROR making http request to gitter (retrying in %d seconds): %s\n",
+					"ERROR making http request to gitter (retrying in %d seconds): `%s`\n",
 					pow(2, retries),
 					err,
 				),
@@ -75,18 +75,22 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 			isInQuietPeriod := time.Now().Before(lastFullMessageWasSent.Add(quietPeriod))
 			line, err := reader.ReadBytes('\n')
 			if err != nil {
-				logToSlackTestChannel(
-					rtm,
-					fmt.Sprintf(
-						"ERROR reading message from gitter (retrying in %d seconds): '%s'",
-						pow(2, retries),
-						err,
-					),
-				)
+				if !(err.Error() == "unexpected EOF" && retries == 0) {
+					logToSlackTestChannel(
+						rtm,
+						fmt.Sprintf(
+							"ERROR reading message from gitter (retrying in %d seconds): `%s`",
+							pow(2, retries),
+							err,
+						),
+					)
+				}
 				retries++
 				break
 			}
+
 			retries = 0
+
 			if string(line) == heartbeat {
 				// Dropping heartbeat
 				continue
@@ -94,12 +98,16 @@ func Listen(rtm *slack.RTM, gitterToken auth.Token) {
 
 			var messageFromGitter GitterMessage
 			err = json.Unmarshal(line, &messageFromGitter)
-			if err != nil {
+			if err != nil && len(line) != 0 {
 				logToSlackTestChannel(
 					rtm,
-					fmt.Sprintf("ERROR parsing JSON message from gitter: %s\nThe JSON:\n%s", err, line),
+					fmt.Sprintf(
+						"ERROR parsing JSON message from gitter: `%s`\nThe JSON: `%s`",
+						err,
+						line,
+					),
 				)
-				continue
+				break
 			}
 
 			heading := fmt.Sprintf(
