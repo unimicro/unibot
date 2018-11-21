@@ -4,3 +4,4 @@ unibot
 *.new
 tokens.json
 
+bolt.db
