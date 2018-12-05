@@ -1,7 +1,7 @@
 #! /bin/bash
 set -e
 
-SERVER=${1:-screen}
+SERVER=${1:-unibot}
 
 CMD='tar xzf - -C /tmp/
  && echo ≫ Making directory
